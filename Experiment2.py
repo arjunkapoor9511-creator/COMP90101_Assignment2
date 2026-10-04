@@ -29,21 +29,27 @@ def generateData(seed, getTopPercentage, dataFolder):
     state with DataGenerator's random.randint() calls), so the entire
     sequence is fully determined by `seed` alone. Creates `dataFolder` if
     it doesn't exist yet and writes the sequence to OperationsSequence.txt
-    inside it. Returns the operations array (not just keys, since this
-    sequence mixes two operation types).
+    inside it. Returns (operations, actualGetTopPercentage): the operations
+    array (not just keys, since this sequence mixes two operation types),
+    and the actual getTop percentage counted at generation time (total
+    getTops / SEQUENCE_LENGTH), which can differ slightly from the target
+    getTopPercentage since each operation's type is a probabilistic draw.
     """
     G.setSeed(seed)
     probability = getTopPercentage / 100
     operations = [None] * SEQUENCE_LENGTH
+    getTopCount = 0
     for i in range(SEQUENCE_LENGTH):
         if random.random() < probability:
             operations[i] = G.genGetTop()
+            getTopCount += 1
         else:
             operations[i] = G.genPush()
     os.makedirs(dataFolder, exist_ok=True)
     filePath = os.path.join(dataFolder, "OperationsSequence.txt")
     G.writeFile(filePath, operations)
-    return operations
+    actualGetTopPercentage = 100 * getTopCount / SEQUENCE_LENGTH
+    return operations, actualGetTopPercentage
 
 
 def runExperiment2():
@@ -51,19 +57,19 @@ def runExperiment2():
     Run Experiment 2: for each (seed, getTopPercentage, folder) in
     SEQUENCE_CONFIGS, generate the mixed push/getTop sequence, then time
     replaying it against MaxHeap and against Competitor, sequentially and
-    separately. Each row (getTopPercentage, heap runtime, competitor
-    runtime) is appended to Experiment2/results.csv as soon as that config
-    finishes.
+    separately. Each row (target getTopPercentage, actual getTopPercentage,
+    heap runtime, competitor runtime) is appended to Experiment2/results.csv
+    as soon as that config finishes.
     """
     os.makedirs(EXPERIMENT2_ROOT, exist_ok=True)
     resultsPath = os.path.join(EXPERIMENT2_ROOT, "results.csv")
 
     with open(resultsPath, "w", newline="") as resultsFile:
         writer = csv.writer(resultsFile)
-        writer.writerow(["GetTopPercentage", "MaxHeapRuntimeSeconds", "CompetitorRuntimeSeconds"])
+        writer.writerow(["GetTopPercentage", "ActualGetTopPercentage", "MaxHeapRuntimeSeconds", "CompetitorRuntimeSeconds"])
 
         for seed, getTopPercentage, folder in SEQUENCE_CONFIGS:
-            operations = generateData(seed, getTopPercentage, folder)
+            operations, actualGetTopPercentage = generateData(seed, getTopPercentage, folder)
 
             # Two independent copies so the heap and array runs can't affect each other's input.
             heapOps = list(operations)
@@ -87,5 +93,5 @@ def runExperiment2():
                     C.getTop()
             arrayRuntime = time.perf_counter() - start  # --- timing stops here ---
 
-            writer.writerow([getTopPercentage, heapRuntime, arrayRuntime])
+            writer.writerow([getTopPercentage, actualGetTopPercentage, heapRuntime, arrayRuntime])
             resultsFile.flush()
