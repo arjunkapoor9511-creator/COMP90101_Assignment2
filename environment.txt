@@ -1,0 +1,8 @@
+Programming language: Python 3.14.5 (tags/v3.14.5, MSC v.1944 64 bit [AMD64])
+Interpreter path: C:\Users\arjunkapoor\AppData\Local\Programs\Python\Python314\python.exe
+Compiler/toolchain: N/A (CPython interpreted, no separate compilation step)
+Operating system: Microsoft Windows 11 Enterprise, Version 10.0.26200 (Build 26200)
+CPU: Snapdragon(R) X 12-core X1E80100 @ 3.40 GHz (ARM64)
+Cores / logical processors: 12 / 12
+System architecture: ARM64-based PC
+Memory (RAM): 32,324 MB (~31.6 GB)
